@@ -51,11 +51,23 @@ def main():
             texto = fuente.render("GAME OVER", True, BLANCO)
             pantalla.blit(texto, (ANCHO // 2 - 100, ALTO // 2 - 20))
 
-        # Eventos (solo cerrar ventana)
+        # --- Eventos del teclado y del sistema ---
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 return
+
+            # Movimiento lateral
+            elif evento.type == pygame.KEYDOWN and not game_over:
+                if evento.key == pygame.K_LEFT:
+                    pieza.x -= 1
+                    if colision(pieza, grid):  # Evita salirse o chocar
+                        pieza.x += 1
+                elif evento.key == pygame.K_RIGHT:
+                    pieza.x += 1
+                    if colision(pieza, grid):
+                        pieza.x -= 1
+
 
         pygame.display.flip()
         reloj.tick(30)
