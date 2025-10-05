@@ -29,6 +29,7 @@ COLORES = [
 # FORMAS DE LOS TETROMINOS =================================
 # ==========================================================
 
+# Formas
 TETROMINOS = [
     [[1, 1, 1, 1]],                # I 
     [[1, 1], [1, 1]],              # O 
@@ -68,6 +69,8 @@ class Pieza:
 # ==========================================================
 
 # --- Crear el grid (tablero vacío) ---
+
+# --- Funciones ---
 def crear_grid():
     return [[0 for _ in range(COLUMNAS)] for _ in range(FILAS)]
 
