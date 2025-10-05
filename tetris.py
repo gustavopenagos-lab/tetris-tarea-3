@@ -13,6 +13,7 @@ FILAS = ALTO // TAM_BLOQUE
 
 # Colores
 NEGRO = (0, 0, 0)
+GRIS = (34,34,34)
 BLANCO = (255, 255, 255)
 COLORES = [
     (0, 255, 255),  # cyan
@@ -39,7 +40,7 @@ TETROMINOS = [
 ]
 
 # ==========================================================
-# CLASE PIEZA (representa cada tetromino) ==================
+# CLASES ===================================================
 # ==========================================================
 
 class Pieza:
@@ -48,6 +49,19 @@ class Pieza:
         self.y = y
         self.forma = forma
         self.color = random.choice(COLORES)
+
+    # ROTACION DE LAS PIEZAS -------------------------------
+    def rotar(self, grid):
+        # Rotación en sentido horario
+        rotada = list(zip(*self.forma[::-1]))
+        rotada = [list(fila) for fila in rotada]
+
+        forma_original = self.forma
+        self.forma = rotada
+
+        # Si colisiona tras rotar, se cancela
+        if colision(self, grid):
+            self.forma = forma_original
 
 # ==========================================================
 # FUNCIONES DE LÓGICA DE JUEGO =============================
@@ -81,6 +95,20 @@ def fijar_pieza(pieza, grid):
             if valor:
                 grid[pieza.y + i][pieza.x + j] = pieza.color
 
+# --- Limpiar linea completa ---
+def limpiar_lineas(grid):
+    nuevas = [fila for fila in grid if any(c == 0 for c in fila)]
+    lineas_eliminadas = FILAS - len(nuevas)
+    while len(nuevas) < FILAS:
+        nuevas.insert(0, [0 for _ in range(COLUMNAS)])
+    return nuevas, lineas_eliminadas
+
+# --- Mostrar puntaje ---
+def mostrar_puntaje(pantalla, score):
+    fuente = pygame.font.SysFont("Arial", 25)
+    texto = fuente.render(f"Puntaje: {score}", True, BLANCO)
+    pantalla.blit(texto, (10, 10))
+
 # --- Dibujar tablero y bloques fijos ---
 def dibujar_grid(pantalla, grid):
     for y in range(FILAS):
@@ -95,7 +123,7 @@ def dibujar_grid(pantalla, grid):
             # Dibuja líneas blancas como guía    
             pygame.draw.rect(
                 pantalla,
-                BLANCO,
+                GRIS,
                 (x * TAM_BLOQUE, y * TAM_BLOQUE, TAM_BLOQUE, TAM_BLOQUE),
                 1
             )
