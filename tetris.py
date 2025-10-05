@@ -21,7 +21,7 @@ COLORES = [
     (128, 0, 128)   # morado
 ]
 
-# formas
+# Formas
 TETROMINOS = [
     [[1, 1, 1, 1]],                # I
     [[1, 1], [1, 1]],              # O
@@ -39,6 +39,19 @@ class Pieza:
         self.y = y
         self.forma = forma
         self.color = random.choice(COLORES)
+
+    def rotar(self, grid):
+        # Rotación en sentido horario
+        rotada = list(zip(*self.forma[::-1]))
+        rotada = [list(fila) for fila in rotada]
+
+        forma_original = self.forma
+        self.forma = rotada
+
+        # Si colisiona tras rotar, se cancela
+        if colision(self, grid):
+            self.forma = forma_original
+
 
 # --- Funciones ---
 def crear_grid():

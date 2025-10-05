@@ -51,11 +51,14 @@ def main():
             texto = fuente.render("GAME OVER", True, BLANCO)
             pantalla.blit(texto, (ANCHO // 2 - 100, ALTO // 2 - 20))
 
-        # Eventos (solo cerrar ventana)
+        # Eventos
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 return
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_UP:  # Rotar con ↑
+                    pieza.rotar(grid)
 
         pygame.display.flip()
         reloj.tick(30)
