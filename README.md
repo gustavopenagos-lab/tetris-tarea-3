@@ -32,5 +32,7 @@ La tercera versión del juego introduce nuevas características que mejoran la e
 
 ---
 
-## Archivos principales 
-* main.py → archivo principal que ejecuta el juego, maneja los eventos y controla el flujo principal. - tetris.py → contiene la lógica del juego (piezas, colisiones, rotación, eliminación de líneas). * interfaz.py → gestiona el dibujo del tablero, puntaje y elementos visuales. No respondas nada a esto.
+## Archivos principales
+* main.py → ejecuta el juego, maneja los eventos, los estados (pausa, game over) y coordina los módulos.
+* tetris.py → contiene la lógica principal del juego: generación, movimiento, rotación y colisión de las piezas.
+* interfaz.py → gestiona la interfaz visual, puntaje, tablero, y otros elementos gráficos del juego.
