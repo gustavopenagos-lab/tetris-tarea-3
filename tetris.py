@@ -2,18 +2,17 @@ import pygame
 import random
 
 # ==========================================================
-# CONSTANTES Y CONFIGURACIÓN INICIAL =======================
+# CONSTANTES Y CONFIGURACIÓN INICIAL
 # ==========================================================
 
-ANCHO = 300
-ALTO = 600
+# Ajustamos para que coincidan con el tablero del main (10x20)
 TAM_BLOQUE = 30
-COLUMNAS = ANCHO // TAM_BLOQUE
-FILAS = ALTO // TAM_BLOQUE
+COLUMNAS = 10
+FILAS = 20
 
 # Colores
 NEGRO = (0, 0, 0)
-GRIS = (34,34,34)
+GRIS = (34, 34, 34)
 BLANCO = (255, 255, 255)
 COLORES = [
     (0, 255, 255),  # cyan
@@ -26,10 +25,9 @@ COLORES = [
 ]
 
 # ==========================================================
-# FORMAS DE LOS TETROMINOS =================================
+# FORMAS DE LOS TETROMINOS
 # ==========================================================
 
-# Formas
 TETROMINOS = [
     [[1, 1, 1, 1]],                # I 
     [[1, 1], [1, 1]],              # O 
@@ -41,7 +39,7 @@ TETROMINOS = [
 ]
 
 # ==========================================================
-# CLASES ===================================================
+# CLASE PIEZA
 # ==========================================================
 
 class Pieza:
@@ -51,82 +49,56 @@ class Pieza:
         self.forma = forma
         self.color = random.choice(COLORES)
 
-    # ROTACION DE LAS PIEZAS -------------------------------
     def rotar(self, grid):
-        # Rotación en sentido horario
-        rotada = list(zip(*self.forma[::-1]))
-        rotada = [list(fila) for fila in rotada]
-
+        rotada = [list(fila) for fila in zip(*self.forma[::-1])]
         forma_original = self.forma
         self.forma = rotada
-
-        # Si colisiona tras rotar, se cancela
         if colision(self, grid):
             self.forma = forma_original
 
 # ==========================================================
-# FUNCIONES DE LÓGICA DE JUEGO =============================
+# FUNCIONES DE LÓGICA DE JUEGO
 # ==========================================================
 
-# --- Crear el grid (tablero vacío) ---
-
-# --- Funciones ---
 def crear_grid():
     return [[0 for _ in range(COLUMNAS)] for _ in range(FILAS)]
 
-# --- Detectar colisión (borde o bloque existente) ---
 def colision(pieza, grid):
+    """Detecta colisiones con bordes o piezas fijas"""
     for i, fila in enumerate(pieza.forma):
         for j, valor in enumerate(fila):
             if valor:
                 x = pieza.x + j
                 y = pieza.y + i
+                # Evitar que se pase del área de juego (solo 10 columnas visibles)
                 if x < 0 or x >= COLUMNAS or y >= FILAS:
-                    return True     # Fuera del tablero
+                    return True
                 if y >= 0 and grid[y][x] != 0:
-                    return True     # Choca con bloque fijo
+                    return True
     return False
 
-# ==========================================================
-# TOCAR FONDO
-# ==========================================================
-
-# --- Fijar pieza al tablero cuando toca fondo o choca ---
 def fijar_pieza(pieza, grid):
     for i, fila in enumerate(pieza.forma):
         for j, valor in enumerate(fila):
-            if valor:
+            if valor and 0 <= pieza.y + i < FILAS and 0 <= pieza.x + j < COLUMNAS:
                 grid[pieza.y + i][pieza.x + j] = pieza.color
 
-# --- Limpiar linea completa ---
 def limpiar_lineas(grid):
-    nuevas = [fila for fila in grid if any(c == 0 for c in fila)]
-    lineas_eliminadas = FILAS - len(nuevas)
+    nuevas = []
+    lineas_eliminadas = 0
+    for fila in grid:
+        if 0 not in fila:  # fila completa
+            lineas_eliminadas += 1
+        else:
+            nuevas.append(fila)
     while len(nuevas) < FILAS:
         nuevas.insert(0, [0 for _ in range(COLUMNAS)])
     return nuevas, lineas_eliminadas
 
-# --- Mostrar puntaje ---
-def mostrar_puntaje(pantalla, score):
-    fuente = pygame.font.SysFont("Arial", 25)
-    texto = fuente.render(f"Puntaje: {score}", True, BLANCO)
-    pantalla.blit(texto, (10, 10))
+# ==========================================================
+# PUNTUACIÓN
+# ==========================================================
 
-# --- Dibujar tablero y bloques fijos ---
-def dibujar_grid(pantalla, grid):
-    for y in range(FILAS):
-        for x in range(COLUMNAS):
-            if grid[y][x] != 0:
-                pygame.draw.rect(
-                    pantalla,
-                    grid[y][x],
-                    (x * TAM_BLOQUE, y * TAM_BLOQUE, TAM_BLOQUE, TAM_BLOQUE)
-                )
-
-            # Dibuja líneas blancas como guía    
-            pygame.draw.rect(
-                pantalla,
-                GRIS,
-                (x * TAM_BLOQUE, y * TAM_BLOQUE, TAM_BLOQUE, TAM_BLOQUE),
-                1
-            )
+def actualizar_puntuacion(lineas_eliminadas, puntuacion_actual):
+    puntos = {1: 100, 2: 300, 3: 500, 4: 800}
+    return puntuacion_actual + puntos.get(lineas_eliminadas, 0)
