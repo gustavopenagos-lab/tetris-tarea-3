@@ -1,100 +1,66 @@
 from tetris import *
+import pygame
+import random
 
 def main():
 
     # ==========================================================
-    # INTERFAZ GRÁFICA
-    # ==========================================================
-
-    # ==========================================================
     # CONFIGURACIÓN DE LA INTERFAZ GRÁFICA
-
+    # ==========================================================
     pygame.init()
-    pantalla = pygame.display.set_mode((ANCHO, ALTO))
-    pygame.display.set_caption("Tetris")
+    
+    # 🔹 Aumentamos el ancho para mostrar la pieza siguiente
+    ANCHO_TOTAL = ANCHO + 150  
+    pantalla = pygame.display.set_mode((ANCHO_TOTAL, ALTO))
+    pygame.display.set_caption("Tetris Mejorado")
     reloj = pygame.time.Clock()
 
     # ==========================================================
     # VARIABLES DE JUEGO INICIALES
-    
+    # ==========================================================
     grid = crear_grid()
     pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
+    siguiente_pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
+
     game_over = False
     contador_caida = 0
-    velocidad_caida = 30  # cuanto menor, más rápido cae
-    score = 0   # Variable de puntaje
-    pausado = False     # Variable de pausa
+    velocidad_caida = 30
+    score = 0
+    pausado = False
 
     # ==========================================================
     # BUCLE PRINCIPAL DEL JUEGO
-
+    # ==========================================================
     while True:
         pantalla.fill(NEGRO)
 
-                # ==========================================================
-        # PAUSA DEL JUEGO
         # ==========================================================
-        if pausado:
-            fuente = pygame.font.SysFont("Arial", 40)
-            texto = fuente.render("PAUSA", True, BLANCO)
-            pantalla.blit(texto, (ANCHO // 2 - 60, ALTO // 2 - 20))
-            
-            # Actualiza pantalla para mostrar "PAUSA"
-            pygame.display.flip()
-            
-            # Mientras está pausado, espera eventos (para poder reanudar con 'P')
-            pausando = True
-            while pausando:
-                for evento in pygame.event.get():
-                    if evento.type == pygame.QUIT:
-                        pygame.quit()
-                        return
-                    elif evento.type == pygame.KEYDOWN:
-                        if evento.key == pygame.K_p:  # reanudar
-                            pausado = False
-                            pausando = False
-                            break
-                reloj.tick(10)  # controla la velocidad del bucle en pausa
-        
+        # CAÍDA AUTOMÁTICA
         # ==========================================================
-        # PAUSA DELJUEGO
-        # ==========================================================
-
-        if pausado:
-            fuente = pygame.font.SysFont("Arial", 40)
-            texto = fuente.render("PAUSA", True, BLANCO)
-            pantalla.blit(texto, (ANCHO // 2 - 60, ALTO // 2 - 20))
-
-
-        # ==========================================================
-        # CAÍDA AUTOMÁTICA DE LOS TETROMINOS
-        # ==========================================================
-
         if not game_over:
             contador_caida += 1
             if contador_caida >= velocidad_caida:
                 pieza.y += 1
-                # Si colisiona, fijar pieza y generar otra
                 if colision(pieza, grid):
                     pieza.y -= 1
                     fijar_pieza(pieza, grid)
-
-                    # 🔹 Limpiar líneas después de fijar
                     grid, lineas = limpiar_lineas(grid)
-                    score += lineas * 100  # cada línea vale 100 puntos
+                    score += lineas * 100
+                    
+                    # 🔹 Cambiar a la siguiente pieza
+                    pieza = siguiente_pieza
+                    siguiente_pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
 
-                    pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
-
-                    # Si colisiona apenas aparece → Game Over
                     if colision(pieza, grid):
                         game_over = True
                 contador_caida = 0
 
-        # ------------------------------------------------------
-        # DIBUJAR ELEMENTOS EN PANTALLA
+        # ==========================================================
+        # DIBUJAR TODO
+        # ==========================================================
         dibujar_grid(pantalla, grid)
 
-        # Dibujar pieza activa (la que está cayendo)
+        # Dibujar pieza actual
         if not game_over:
             for i, fila in enumerate(pieza.forma):
                 for j, valor in enumerate(fila):
@@ -107,87 +73,81 @@ def main():
                              TAM_BLOQUE, TAM_BLOQUE)
                         )
 
-        # ------------------------------------------------------
-        # EVENTOS DE TECLADO Y SISTEMA
-        
+        # Mostrar puntaje
+        mostrar_puntaje(pantalla, score)
+
+        # 🔹 Mostrar la próxima pieza
+        mostrar_siguiente_pieza(pantalla, siguiente_pieza)
+
+        # ==========================================================
+        # EVENTOS
+        # ==========================================================
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 return
             
-            # Movimiento lateral del jugador
-            elif evento.type == pygame.KEYDOWN and not game_over:
-                # Movimiento a la izquierda
-                if evento.key == pygame.K_LEFT: # Mover con ←  
+            if evento.type == pygame.KEYDOWN and not game_over:
+                if evento.key == pygame.K_LEFT:
                     pieza.x -= 1
-                    if colision(pieza, grid):  
+                    if colision(pieza, grid):
                         pieza.x += 1
-                # Movimiento a la derecha
-                elif evento.key == pygame.K_RIGHT:  # Mover con →
+                elif evento.key == pygame.K_RIGHT:
                     pieza.x += 1
                     if colision(pieza, grid):
                         pieza.x -= 1
-
-            # Rotación de la pieza
-            if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_UP:  # Rotar con ↑
+                elif evento.key == pygame.K_UP:
                     pieza.rotar(grid)
-                
-                # Acelerar caída una posición
-                elif evento.key == pygame.K_DOWN:   # Bajar con ↓
+                elif evento.key == pygame.K_DOWN:
                     pieza.y += 1
                     if colision(pieza, grid):
                         pieza.y -= 1
-                
-                # Caída instantánea
-                elif evento.key == pygame.K_SPACE:  # Caída instantánea con [ESPACIO]
+                elif evento.key == pygame.K_SPACE:
                     while not colision(pieza, grid):
                         pieza.y += 1
                     pieza.y -= 1
                     fijar_pieza(pieza, grid)
                     grid, lineas = limpiar_lineas(grid)
                     score += lineas * 100
-                    pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
-
-                if evento.key == pygame.K_p: # Pausa con P 
+                    pieza = siguiente_pieza
+                    siguiente_pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
+                elif evento.key == pygame.K_p:
                     pausado = not pausado
-            
-            # Reiniciar todo el juego
-            if game_over and evento.type == pygame.KEYDOWN and evento.key != pygame.K_p:
-                grid = crear_grid()
-                pieza = Pieza(COLUMNAS // 2 - 2, 0, random.choice(TETROMINOS))
-                game_over = False
-                score = 0
-                pausado = False
 
-        # ------------------------------------------------------
-        # MOSTRAR PUNTAJE EN PANTALLA
-        dibujar_grid(pantalla, grid)
-        mostrar_puntaje(pantalla, score)
-
-        # ------------------------------------------------------
-        # ACTUALIZAR PANTALLA Y RITMO DEL JUEGO ----------------
-        # ------------------------------------------------------
-
+        # ==========================================================
+        # GAME OVER
+        # ==========================================================
         if game_over:
-            # Fondo semitransparente
-            overlay = pygame.Surface((ANCHO, ALTO))
-            overlay.set_alpha(150)  # nivel de transparencia (0–255)
-            overlay.fill((0, 0, 0))  # negro
-            pantalla.blit(overlay, (0, 0))
-
-            # Texto de Game Over encima
             fuente = pygame.font.SysFont("Arial", 40, bold=True)
             texto = fuente.render("GAME OVER", True, BLANCO)
             pantalla.blit(texto, (ANCHO // 2 - 100, ALTO // 2 - 20))
 
-
         pygame.display.flip()
         reloj.tick(30)
 
-# ==========================================================
-# PUNTO DE ENTRADA DEL PROGRAMA ============================
-# ==========================================================
 
+# ==========================================================
+# NUEVA FUNCIÓN PARA MOSTRAR LA SIGUIENTE PIEZA
+# ==========================================================
+def mostrar_siguiente_pieza(pantalla, pieza):
+    fuente = pygame.font.SysFont("Arial", 25)
+    texto = fuente.render("Siguiente:", True, BLANCO)
+    pantalla.blit(texto, (ANCHO + 20, 50))
+
+    for i, fila in enumerate(pieza.forma):
+        for j, valor in enumerate(fila):
+            if valor:
+                pygame.draw.rect(
+                    pantalla,
+                    pieza.color,
+                    (ANCHO + 40 + j * TAM_BLOQUE,
+                     100 + i * TAM_BLOQUE,
+                     TAM_BLOQUE,
+                     TAM_BLOQUE)
+                )
+
+# ==========================================================
+# EJECUCIÓN PRINCIPAL
+# ==========================================================
 if __name__ == "__main__":
     main()
